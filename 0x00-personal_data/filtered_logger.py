@@ -1,94 +1,106 @@
 #!/usr/bin/env python3
-"""Module for filtering sensitive information in logs."""
-import os
-import re
+"""
+Module for filtered logging functionalities.
+"""
 import logging
+import re
+import os
 import mysql.connector
-from typing import List
+from typing import List, Tuple
 
 
-patterns = {
-    'extract': lambda x, y: r'(?P<field>{})=[^{}]*'.format('|'.join(x), y),
-    'replace': lambda x: r'\g<field>={}'.format(x),
-}
-SENSITIVE_FIELDS = ("name", "email", "phone", "ssn", "password")
-
-
-def filter_log_data(
-        fields: List[str], redaction: str, message: str, separator: str,
-        ) -> str:
-    """Filters sensitive information in a log message."""
-    extract, replace = (patterns["extract"], patterns["replace"])
-    return re.sub(extract(fields, separator), replace(redaction), message)
-
-
-def initialize_logger() -> logging.Logger:
-    """Creates a new logger for logging user data."""
-    logger = logging.getLogger("user_data_logs")
-    stream_handler = logging.StreamHandler()
-    stream_handler.setFormatter(RedactingFormatter(SENSITIVE_FIELDS))
-    logger.setLevel(logging.INFO)
-    logger.propagate = False
-    logger.addHandler(stream_handler)
-    return logger
-
-
-def connect_to_database() -> mysql.connector.connection.MySQLConnection:
-    """Establishes connection to a database."""
-    db_host = os.getenv("SENSITIVE_DATA_DB_HOST", "localhost")
-    db_name = os.getenv("SENSITIVE_DATA_DB_NAME", "")
-    db_user = os.getenv("SENSITIVE_DATA_DB_USERNAME", "root")
-    db_pwd = os.getenv("SENSITIVE_DATA_DB_PASSWORD", "")
-    connection = mysql.connector.connect(
-        host=db_host,
-        port=3306,
-        user=db_user,
-        password=db_pwd,
-        database=db_name,
-    )
-    return connection
-
-
-def main():
-    """Logs information about user records from a database table."""
-    fields = "name,email,phone,ssn,password,ip,last_login,user_agent"
-    columns = fields.split(',')
-    query = "SELECT {} FROM users;".format(fields)
-    info_logger = initialize_logger()
-    connection = connect_to_database()
-    with connection.cursor() as cursor:
-        cursor.execute(query)
-        rows = cursor.fetchall()
-        for row in rows:
-            record = map(
-                lambda x: '{}={}'.format(x[0], x[1]),
-                zip(columns, row),
-            )
-            msg = '{};'.format('; '.join(list(record)))
-            args = (
-                "user_data_logs", logging.INFO, None, None, msg, None, None
-            )
-            log_record = logging.LogRecord(*args)
-            info_logger.handle(log_record)
+PII_FIELDS = ("email", "ssn", "password")
 
 
 class RedactingFormatter(logging.Formatter):
-    """Redacting Formatter class for log messages."""
+    """ Redacting Formatter class """
+
     REDACTION = "***"
     FORMAT = "[HOLBERTON] %(name)s %(levelname)s %(asctime)-15s: %(message)s"
-    FORMAT_FIELDS = ('name', 'levelname', 'asctime', 'message')
     SEPARATOR = ";"
 
     def __init__(self, fields: List[str]):
-        super(RedactingFormatter, self).__init__(self.FORMAT)
+        super().__init__(self.FORMAT)
         self.fields = fields
 
     def format(self, record: logging.LogRecord) -> str:
-        """Formats a log record."""
-        msg = super(RedactingFormatter, self).format(record)
-        txt = filter_log_data(self.fields, self.REDACTION, msg, self.SEPARATOR)
-        return txt
+        """
+        Filters values in incoming log records using filter_datum.
 
+        Args:
+            record: The LogRecord to be formatted.
+
+        Returns:
+            str: The formatted log message.
+        """
+        log_message = super().format(record)
+        return filter_datum(self.fields, self.REDACTION, log_message, self.SEPARATOR)
+
+def filter_datum(fields: List[str], redaction: str, message: str, separator: str) -> str:
+    """
+    Obfuscates specified fields in a log message using regex.
+
+    Args:
+        fields: A list of strings representing fields to obfuscate.
+        redaction: A string representing by what the field will be obfuscated.
+        message: A string representing the log line.
+        separator: A string representing by which character is separating all fields in the log line.
+
+    Returns:
+        str: The filtered log message with specified fields obfuscated.
+    """
+    return re.sub(
+        '|'.join(f'(?<={separator}|^){field}=[^{separator}]*' for field in fields),
+        lambda match: f"{match.group().split('=')[0]}={redaction}",
+        message
+    )
+
+def get_logger() -> logging.Logger:
+    """
+    Creates a logging.Logger object.
+
+    Returns:
+        logging.Logger: The created logger object.
+    """
+    logger = logging.getLogger("user_data")
+    logger.setLevel(logging.INFO)
+    formatter = RedactingFormatter(fields=PII_FIELDS)
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
+    return logger
+
+def get_db() -> mysql.connector.connection.MySQLConnection:
+    """
+    Returns a connector to the MySQL database.
+
+    Returns:
+        mysql.connector.connection.MySQLConnection: The connector to the MySQL database.
+    """
+    username = os.getenv("PERSONAL_DATA_DB_USERNAME", "root")
+    password = os.getenv("PERSONAL_DATA_DB_PASSWORD", "")
+    host = os.getenv("PERSONAL_DATA_DB_HOST", "localhost")
+    db_name = os.getenv("PERSONAL_DATA_DB_NAME")
+
+    return mysql.connector.connect(
+        user=username,
+        password=password,
+        host=host,
+        database=db_name
+    )
+
+def main() -> None:
+    """
+    Retrieves all rows in the users table, filters the data, and displays each row.
+    """
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM users;")
+    for row in cursor:
+        filtered_row = {field: "***" if field in PII_FIELDS else row[field] for field in row}
+        print(f"[HOLBERTON] user_data INFO 2019-11-19 18:37:59,596: {filtered_row};\nFiltered fields:\n{name}\n{email}\n{phone}\n{ssn}\n{password}\n")
+    cursor.close()
+    db.close()
 
 if __name__ == "__main__":
     main()
