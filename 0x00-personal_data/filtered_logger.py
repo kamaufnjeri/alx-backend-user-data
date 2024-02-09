@@ -80,7 +80,8 @@ class SecureFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         """ Filters values in incoming log records using obfuscate_data """
         record.msg = obfuscate_data(
-            self.fields, self.REDACTION, record.getMessage(), self.SEPARATOR
+            self.fields, self.REDACTION,
+            record.getMessage(), self.SEPARATOR
         )
         return super(SecureFormatter, self).format(record)
 
