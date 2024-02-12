@@ -32,3 +32,11 @@ def unauthorized() -> str:
     status code, the response must be
     """
     abort(401)
+
+
+
+@app_views.route('/forbidden', strict_slashes=False, methods=['GET'])
+def forbidden() -> str:
+    """ Forbidden route
+    """
+    abort(403)
