@@ -12,8 +12,9 @@ user_clear_pwd = "H0lberton:School:98!"
 user = User()
 user.email = user_email
 user.password = user_clear_pwd
-print("New user: {} / {}".format(user.id))
+print("New user: {}".format(user.id))
 user.save()
 
+print(user.password)
 basic_clear = "{}:{}".format(user_email, user_clear_pwd)
 print("Basic Base64: {}".format(base64.b64encode(basic_clear.encode('utf-8')).decode("utf-8")))
