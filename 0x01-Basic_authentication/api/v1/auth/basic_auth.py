@@ -2,7 +2,8 @@
 """A class that inherits from Auth class"""
 from api.v1.auth.auth import Auth
 from base64 import b64decode
-from typing import List
+from typing import List, TypeVar
+from models.user import User
 
 
 class BasicAuth(Auth):
@@ -17,7 +18,7 @@ class BasicAuth(Auth):
         if authorization_header is None:
             return None
 
-        if not type(authorization_header) == str:
+        if not isinstance(authorization_header, str):
             return None
 
         if not authorization_header.startswith("Basic "):
@@ -34,7 +35,7 @@ class BasicAuth(Auth):
         if base64_authorization_header is None:
             return None
 
-        if not type(base64_authorization_header) == str:
+        if not isinstance(base64_authorization_header, str):
             return None
 
         try:
@@ -54,7 +55,7 @@ class BasicAuth(Auth):
         if decoded_base64_authorization_header is None:
             return (None, None)
 
-        if not type(decoded_base64_authorization_header) == str:
+        if not isinstance(decoded_base64_authorization_header, str):
             return (None, None)
 
         if ":" not in decoded_base64_authorization_header:
@@ -63,3 +64,26 @@ class BasicAuth(Auth):
         list_items = decoded_base64_authorization_header.split(":")
 
         return (list_items[0], list_items[1])
+
+    def user_object_from_credentials(
+        self,
+        user_email: str,
+        user_pwd: str
+    ) -> TypeVar('User'):
+        """return user that matches password and email"""
+        if user_email is None or user_pwd is None:
+            return None
+
+        if not isinstance(user_email, str) or not isinstance(user_pwd, str):
+            return None
+
+        users: List['User'] = User.search({"email": user_email})
+
+        if users == []:
+            return None
+
+        for user in users:
+            if user.is_valid_password(user_pwd):
+                return user
+
+        return None
