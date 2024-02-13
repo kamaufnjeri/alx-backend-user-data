@@ -16,12 +16,14 @@ class Auth:
             return False
 
         slashless_exclude_paths: List[str] = []
+        asterik_exclude_paths: List[str] = []
 
         for new_path in excluded_paths:
             slashless_exclude_paths.append(new_path[:-1])
 
-        if path in slashless_exclude_paths:
-            return False
+        for new_path in slashless_exclude_paths:
+            if path.startswith(new_path):
+                return False
 
         return True
 
