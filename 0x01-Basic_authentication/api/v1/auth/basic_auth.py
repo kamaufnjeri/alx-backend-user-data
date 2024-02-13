@@ -88,3 +88,43 @@ class BasicAuth(Auth):
                 return user
 
         return None
+
+    def current_user(self, request=None) -> TypeVar('User'):
+        """Using all the authentications return user"""
+        auth_header: str = self.authorization_header(request)
+
+        if not auth_header:
+            return None
+        
+        extract_auth_header: str = self.extract_base64_authorization_header(
+            auth_header
+        )
+
+        if not extract_auth_header:
+            return None
+        
+        decoded_auth_header: str = self.decode_base64_authorization_header(
+            extract_auth_header
+        )
+
+        if not decoded_auth_header:
+            return None
+        
+        user_credentials: (str, str) = self.extract_user_credentials(
+            decoded_auth_header
+        )
+
+        if user_credentials[0] is None and user_credentials[1] is None:
+            return None
+        
+        user = self.user_object_from_credentials(
+            user_credentials[0],
+            user_credentials[1]
+        )
+
+        if not user:
+            return None
+        
+        return user
+
+        
