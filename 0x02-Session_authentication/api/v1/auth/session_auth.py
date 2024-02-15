@@ -2,6 +2,7 @@
 """A classs SessionAuth that inherits from AUTH"""
 from api.v1.auth.auth import Auth
 from uuid import uuid4
+from models.user import User
 
 
 class SessionAuth(Auth):
@@ -33,3 +34,21 @@ class SessionAuth(Auth):
         user_id = self.user_id_by_session_id.get(session_id)
 
         return user_id
+
+    def current_user(self, request=None):
+        """return user based on session id and user_id"""
+        session_id = self.session_cookie(request)
+
+        if session_id is not None:
+            print(session_id)
+            user_id = self.user_id_for_session_id(session_id)
+            print(user_id)
+            if user_id is not None:
+
+                user = User.get(user_id)
+
+                return user
+
+            return None
+
+        return None
