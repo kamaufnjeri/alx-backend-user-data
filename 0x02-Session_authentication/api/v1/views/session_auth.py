@@ -1,4 +1,4 @@
-#!/usr/bin env python3
+#!/usr/bin/env python3
 """new view for session_auth login"""
 from api.v1.views import app_views
 from flask import request, jsonify
