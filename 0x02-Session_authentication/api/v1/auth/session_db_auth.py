@@ -30,22 +30,22 @@ class SessionDBAuth(SessionExpAuth):
             return None
 
         UserSession.load_from_file()
-        user_sessions = UserSession.search({
+        sessions = UserSession.search({
             'session_id': session_id
         })
 
-        if not user_sessions:
+        if not sessions:
             return None
 
-        user_session = user_session[0]
+        session = sessions[0]
 
-        expired_time = user_session.created_at + \
+        expired_time = session.created_at + \
             timedelta(seconds=self.session_duration)
 
         if expired_time < datetime.utcnow():
             return None
 
-        return user_session.user_id
+        return session.user_id
 
     def destroy_session(self, request=None):
         """delete user session from database"""
@@ -61,17 +61,17 @@ class SessionDBAuth(SessionExpAuth):
         if not user_id:
             return False
 
-        user_session = UserSession.search({
+        sessions = UserSession.search({
             'session_id': session_id
         })
 
-        if not user_session:
+        if not sessions:
             return False
 
-        user_session = user_session[0]
+        session = sessions[0]
 
         try:
-            user_session.remove()
+            session.remove()
             UserSession.save_to_file()
         except Exception:
             return False
