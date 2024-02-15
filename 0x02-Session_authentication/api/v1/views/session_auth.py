@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """new view for session_auth login"""
 from api.v1.views import app_views
-from flask import request, jsonify
+from flask import request, jsonify, abort
 from models.user import User
 import os
 
@@ -40,3 +40,19 @@ def auth_session_login():
             return resp
 
     return jsonify({"error": "wrong password"}), 401
+
+
+@app_views.route(
+    "/auth_session/logout",
+    methods=["DELETE"],
+    strict_slashes=False
+)
+def logout_user():
+    """logout user route"""
+    from api.v1.app import auth
+    destroy = auth.destroy_session(request)
+
+    if destroy is False:
+        abort(404)
+
+    return jsonify({}), 200
