@@ -11,7 +11,7 @@ from sqlalchemy.orm.session import Session
 from user import Base, User
 
 
-class UserDB:
+class DB:
     """Class for managing user data in the database."""
 
     def __init__(self) -> None:
