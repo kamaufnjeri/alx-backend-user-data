@@ -34,7 +34,7 @@ def users() -> str:
 def login() -> str:
     """POST login user
     """
-    email = request.form.get("email"),
+    email = request.form.get("email")
     password = request.form.get("password")
     if not AUTH.valid_login(email, password):
         abort(401)
