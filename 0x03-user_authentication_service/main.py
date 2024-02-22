@@ -4,6 +4,7 @@ import requests
 
 BASE_URL = "http://0.0.0.0:5000"
 
+
 def register_user(email: str, password: str) -> None:
     """Register a user."""
     url = f"{BASE_URL}/users"
@@ -15,6 +16,7 @@ def register_user(email: str, password: str) -> None:
     assert response.status_code == 200
     assert response.json() == {"email": email, "message": "user created"}
 
+
 def log_in_wrong_password(email: str, password: str) -> None:
     """Log in with a wrong password."""
     url = f"{BASE_URL}/sessions"
@@ -24,6 +26,7 @@ def log_in_wrong_password(email: str, password: str) -> None:
     }
     response = requests.post(url, data=payload)
     assert response.status_code == 401
+
 
 def log_in(email: str, password: str) -> str:
     """Log in and return session ID."""
@@ -37,11 +40,13 @@ def log_in(email: str, password: str) -> str:
     assert response.json() == {"email": email, "message": "logged in"}
     return response.cookies.get('session_id')
 
+
 def profile_unlogged() -> None:
     """Retrieve profile information while logged out."""
     url = f"{BASE_URL}/profile"
     response = requests.get(url)
     assert response.status_code == 403
+
 
 def profile_logged(session_id: str) -> None:
     """Retrieve profile information while logged in."""
@@ -51,6 +56,7 @@ def profile_logged(session_id: str) -> None:
     assert response.status_code == 200
     assert "email" in response.json()
 
+
 def log_out(session_id: str) -> None:
     """Log out of a session."""
     url = f"{BASE_URL}/sessions"
@@ -58,6 +64,7 @@ def log_out(session_id: str) -> None:
     response = requests.delete(url, cookies=cookies)
     assert response.status_code == 200
     assert response.json() == {"message": "Bienvenue"}
+
 
 def reset_password_token(email: str) -> str:
     """Request a password reset and return reset token."""
@@ -69,6 +76,7 @@ def reset_password_token(email: str) -> str:
     assert response.json()["email"] == email
     assert "reset_token" in response.json()
     return response.json().get('reset_token')
+
 
 def update_password(email: str, reset_token: str, new_password: str) -> None:
     """Update user's password."""
