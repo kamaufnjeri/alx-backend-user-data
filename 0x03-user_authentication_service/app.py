@@ -7,7 +7,7 @@ from auth import Auth
 
 
 app = Flask(__name__)
-authentication = Auth()
+AUTH = Auth()
 
 
 @app.route("/", methods=["GET"], strict_slashes=False)
@@ -24,8 +24,8 @@ def users() -> str:
     email = request.form.get("email")
     password = request.form.get("password")
     try:
-        authentication.register_user(email, password)
-        return jsonify({"email": email, "message": "user created"}), 201
+        AUTH.register_user(email, password)
+        return jsonify({"email": email, "message": "user created"})
     except ValueError:
         return jsonify({"message": "email already registered"}), 400
 
@@ -36,9 +36,9 @@ def login() -> str:
     """
     email = request.form.get("email"),
     password = request.form.get("password")
-    if not authentication.valid_login(email, password):
+    if not AUTH.valid_login(email, password):
         abort(401)
-    session_id = authentication.create_session(email)
+    session_id = AUTH.create_session(email)
     resp = jsonify({"email": email, "message": "logged in"}), 200
     resp.set_cookie("session_id", session_id)
     return resp
@@ -49,10 +49,10 @@ def logout() -> str:
     """DELETE logout user
     """
     session_id = request.cookies.get("session_id")
-    user = authentication.get_user_from_session_id(session_id)
+    user = AUTH.get_user_from_session_id(session_id)
     if user is None:
         abort(403)
-    authentication.destroy_session(user.id)
+    AUTH.destroy_session(user.id)
     return redirect("/")
 
 
@@ -61,7 +61,7 @@ def user_profile() -> str:
     """GET user information
     """
     session_id = request.cookies.get("session_id")
-    user = authentication.get_user_from_session_id(session_id)
+    user = AUTH.get_user_from_session_id(session_id)
     if user is None:
         abort(403)
     return jsonify({"email": user.email})
@@ -74,7 +74,7 @@ def get_token_to_reset_pwd() -> str:
     email = request.form.get("email")
     r_token = None
     try:
-        r_token = authentication.get_reset_password_token(email)
+        r_token = AUTH.get_reset_password_token(email)
     except ValueError:
         r_token = None
     if r_token is None:
@@ -91,7 +91,7 @@ def password_updated() -> str:
     n_password = request.form.get("new_password")
     password_is_changed = False
     try:
-        authentication.update_password(r_token, n_password)
+        AUTH.update_password(r_token, n_password)
         password_is_changed = True
     except ValueError:
         password_is_changed = False
