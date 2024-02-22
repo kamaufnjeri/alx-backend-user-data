@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""DB module.
-"""
+"""User Database Module."""
+
 from sqlalchemy import create_engine, tuple_
 from sqlalchemy.exc import InvalidRequestError
 from sqlalchemy.ext.declarative import declarative_base
@@ -11,13 +11,11 @@ from sqlalchemy.orm.session import Session
 from user import Base, User
 
 
-class DB:
-    """DB class.
-    """
+class UserDB:
+    """Class for managing user data in the database."""
 
     def __init__(self) -> None:
-        """Initialize a new DB instance.
-        """
+        """Initialize a new UserDB instance."""
         self._engine = create_engine("sqlite:///a.db", echo=False)
         Base.metadata.drop_all(self._engine)
         Base.metadata.create_all(self._engine)
@@ -25,16 +23,14 @@ class DB:
 
     @property
     def _session(self) -> Session:
-        """Memoized session object.
-        """
+        """Get the database session."""
         if self.__session is None:
             DBSession = sessionmaker(bind=self._engine)
             self.__session = DBSession()
         return self.__session
 
     def add_user(self, email: str, hashed_password: str) -> User:
-        """Adds a new user to the database.
-        """
+        """Create a new user in the database."""
         try:
             new_user = User(email=email, hashed_password=hashed_password)
             self._session.add(new_user)
@@ -44,37 +40,35 @@ class DB:
             new_user = None
         return new_user
 
-    def find_user_by(self, **kwargs) -> User:
-        """Finds a user based on a set of filters.
-        """
-        fields, values = [], []
-        for key, value in kwargs.items():
-            if hasattr(User, key):
-                fields.append(getattr(User, key))
-                values.append(value)
+    def find_user_by(self, **filters) -> User:
+        """Find a user in the database based on filters."""
+        filter_fields, filter_values = [], []
+        for field, value in filters.items():
+            if hasattr(User, field):
+                filter_fields.append(getattr(User, field))
+                filter_values.append(value)
             else:
-                raise InvalidRequestError()
-        result = self._session.query(User).filter(
-            tuple_(*fields).in_([tuple(values)])
+                raise InvalidRequestError(f"Invalid filter: {field}")
+        user = self._session.query(User).filter(
+            tuple_(*filter_fields).in_([tuple(filter_values)])
         ).first()
-        if result is None:
-            raise NoResultFound()
-        return result
+        if user is None:
+            raise NoResultFound("User not found.")
+        return user
 
-    def update_user(self, user_id: int, **kwargs) -> None:
-        """Updates a user based on a given id.
-        """
+    def update_user(self, user_id: int, **updates) -> None:
+        """Update user information in the database."""
         user = self.find_user_by(id=user_id)
         if user is None:
             return
-        update_source = {}
-        for key, value in kwargs.items():
+        update_fields = {}
+        for key, value in updates.items():
             if hasattr(User, key):
-                update_source[getattr(User, key)] = value
+                update_fields[getattr(User, key)] = value
             else:
-                raise ValueError()
+                raise ValueError(f"Invalid field: {key}")
         self._session.query(User).filter(User.id == user_id).update(
-            update_source,
+            update_fields,
             synchronize_session=False,
         )
         self._session.commit()
