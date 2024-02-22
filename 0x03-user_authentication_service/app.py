@@ -9,5 +9,5 @@ authentication = Auth()
 
 @app.route('/', methods=['GET'], strict_slashes=False)
 def welcome():
-    """Endpoint to display a welcome message."""
+    """Endpoint to display a welcome message"""
     return jsonify({"message": "Bienvenue"})
