@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""End to end integration test.
-"""
+"""End to end integration test."""
 import requests
 
 BASE_URL = "http://localhost:5000"
+EMAIL = "guillaume@holberton.io"
+PASSWD = "b4l0u"
+NEW_PASSWD = "t4rt1fl3tt3"
 
 
 def register_user(email: str, password: str) -> None:
@@ -58,11 +60,6 @@ def update_password(email: str, reset_token: str, new_password: str) -> None:
     response = requests.put(f"{BASE_URL}/reset_password", data={"email": email, "reset_token": reset_token, "new_password": new_password})
     assert response.status_code == 200
     assert response.json()["email"] == email
-
-
-EMAIL = "guillaume@holberton.io"
-PASSWD = "b4l0u"
-NEW_PASSWD = "t4rt1fl3tt3"
 
 
 if __name__ == "__main__":
