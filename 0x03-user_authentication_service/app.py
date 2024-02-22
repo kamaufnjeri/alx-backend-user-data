@@ -9,13 +9,13 @@ authentication = Auth()
 
 @app.route('/', methods=['GET'])
 def welcome():
-    """Welcome message endpoint."""
+    """Endpoint to display a welcome message."""
     return jsonify({"message": "Bienvenue"})
 
 
 @app.route('/users', methods=['POST'])
 def register():
-    """User registration endpoint."""
+    """Endpoint to register a new user."""
     try:
         email = request.form.get('email')
         password = request.form.get('password')
@@ -27,7 +27,7 @@ def register():
 
 @app.route('/sessions', methods=['POST'])
 def login():
-    """User login endpoint."""
+    """Endpoint to log in a user."""
     try:
         email = request.form.get('email')
         password = request.form.get('password')
@@ -44,7 +44,7 @@ def login():
 
 @app.route('/profile', methods=['GET'])
 def get_profile():
-    """User profile endpoint."""
+    """Endpoint to retrieve a user's profile."""
     try:
         session_id = request.cookies.get('session_id')
         user = authentication.get_user_from_session(session_id)
@@ -58,7 +58,7 @@ def get_profile():
 
 @app.route('/sessions', methods=['DELETE'])
 def logout():
-    """User logout endpoint."""
+    """Endpoint to log out a user."""
     try:
         session_id = request.cookies.get('session_id')
         user = authentication.get_user_from_session(session_id)
@@ -73,7 +73,7 @@ def logout():
 
 @app.route('/reset_password', methods=['POST'])
 def get_reset_token():
-    """Get reset password token endpoint."""
+    """Endpoint to generate a reset password token."""
     try:
         email = request.form.get('email')
         token = authentication.get_reset_token(email)
@@ -84,7 +84,7 @@ def get_reset_token():
 
 @app.route('/reset_password', methods=['PUT'])
 def update_password():
-    """Update password endpoint."""
+    """Endpoint to update a user's password."""
     try:
         email = request.form.get('email')
         reset_token = request.form.get('reset_token')
