@@ -1,25 +1,25 @@
 #!/usr/bin/env python3
-"""A simple Flask app with user authentication features."""
+"""A Flask application for user authentication."""
 from flask import Flask, jsonify, request, abort
-from auth import Auth as A
+from auth import Authenticator as Auth
 
 app = Flask(__name__)
-AUTH = A()
+authentication = Auth()
 
 
 @app.route('/', methods=['GET'])
-def home():
-    """Endpoint to welcome users"""
+def welcome():
+    """Welcome message endpoint."""
     return jsonify({"message": "Bienvenue"})
 
 
 @app.route('/users', methods=['POST'])
-def register_user():
-    """Endpoint to register a user"""
+def register():
+    """User registration endpoint."""
     try:
         email = request.form.get('email')
         password = request.form.get('password')
-        AUTH.register_user(email, password)
+        authentication.register_user(email, password)
         return jsonify({"email": email, "message": "user created"}), 200
     except ValueError:
         return jsonify({"message": "email already registered"}), 400
@@ -27,12 +27,12 @@ def register_user():
 
 @app.route('/sessions', methods=['POST'])
 def login():
-    """Endpoint to log in"""
+    """User login endpoint."""
     try:
         email = request.form.get('email')
         password = request.form.get('password')
-        if AUTH.valid_login(email, password):
-            session_id = AUTH.create_session(email)
+        if authentication.verify_login(email, password):
+            session_id = authentication.create_session(email)
             response = jsonify({"email": email, "message": "logged in"})
             response.set_cookie('session_id', session_id)
             return response, 200
@@ -44,10 +44,10 @@ def login():
 
 @app.route('/profile', methods=['GET'])
 def get_profile():
-    """Endpoint to get user profile"""
+    """User profile endpoint."""
     try:
         session_id = request.cookies.get('session_id')
-        user = AUTH.get_user_from_session_id(session_id)
+        user = authentication.get_user_from_session(session_id)
         if user:
             return jsonify({"email": user.email}), 200
         else:
@@ -58,12 +58,12 @@ def get_profile():
 
 @app.route('/sessions', methods=['DELETE'])
 def logout():
-    """Endpoint to log out"""
+    """User logout endpoint."""
     try:
         session_id = request.cookies.get('session_id')
-        user = AUTH.get_user_from_session_id(session_id)
+        user = authentication.get_user_from_session(session_id)
         if user:
-            AUTH.destroy_session(user.id)
+            authentication.end_session(user.id)
             return jsonify({"message": "logged out"}), 200
         else:
             abort(403)
@@ -72,11 +72,11 @@ def logout():
 
 
 @app.route('/reset_password', methods=['POST'])
-def get_reset_password_token():
-    """Endpoint to get reset password token"""
+def get_reset_token():
+    """Get reset password token endpoint."""
     try:
         email = request.form.get('email')
-        token = AUTH.get_reset_password_token(email)
+        token = authentication.get_reset_token(email)
         return jsonify({"email": email, "reset_token": token}), 200
     except ValueError:
         abort(403)
@@ -84,12 +84,12 @@ def get_reset_password_token():
 
 @app.route('/reset_password', methods=['PUT'])
 def update_password():
-    """Endpoint to update password"""
+    """Update password endpoint."""
     try:
         email = request.form.get('email')
         reset_token = request.form.get('reset_token')
         new_password = request.form.get('new_password')
-        AUTH.update_password(email, reset_token, new_password)
+        authentication.update_password(email, reset_token, new_password)
         return jsonify({"email": email, "message": "Password updated"}), 200
     except ValueError:
         abort(403)
