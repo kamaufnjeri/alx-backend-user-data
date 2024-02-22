@@ -89,6 +89,7 @@ NEW_PASSWD = "t4rt1fl3tt3"
 
 
 if __name__ == "__main__":
+    """run the codes"""
     register_user(EMAIL, PASSWD)
     log_in_wrong_password(EMAIL, NEW_PASSWD)
     profile_unlogged()
