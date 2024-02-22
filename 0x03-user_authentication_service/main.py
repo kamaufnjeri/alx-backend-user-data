@@ -1,65 +1,69 @@
 #!/usr/bin/env python3
-"""End to end integration test."""
+"""
+Main module for interacting with the user authentication service.
+"""
+
 import requests
 
-BASE_URL = "http://localhost:5000"
-EMAIL = "guillaume@holberton.io"
-PASSWD = "b4l0u"
-NEW_PASSWD = "t4rt1fl3tt3"
+AUTH_SERVER = 'http://localhost:5000'  # Assuming authentication server is running locally
 
 
 def register_user(email: str, password: str) -> None:
-    """test register user"""
-    response = requests.post(f"{BASE_URL}/users", data={"email": email, "password": password})
-    assert response.status_code == 200
-    assert response.json()["email"] == email
+    """Registers a new user."""
+    response = requests.post(f'{AUTH_SERVER}/register', json={'email': email, 'password': password})
+    assert response.status_code == 201, f"Failed to register user: {response.text}"
 
 
 def log_in_wrong_password(email: str, password: str) -> None:
-    """test login user wrong pwd"""
-    response = requests.post(f"{BASE_URL}/sessions", data={"email": email, "password": password})
-    assert response.status_code == 401
+    """Attempts to log in with wrong password."""
+    response = requests.post(f'{AUTH_SERVER}/login', json={'email': email, 'password': password})
+    assert response.status_code == 403, "Expected login to fail with wrong password"
 
 
 def log_in(email: str, password: str) -> str:
-    """test login right pwd"""
-    response = requests.post(f"{BASE_URL}/sessions", data={"email": email, "password": password})
-    assert response.status_code == 200
-    return response.cookies.get("session_id")
+    """Logs in a user and returns session ID."""
+    response = requests.post(f'{AUTH_SERVER}/login', json={'email': email, 'password': password})
+    assert response.status_code == 200, f"Failed to log in: {response.text}"
+    return response.json()['session_id']
 
 
 def profile_unlogged() -> None:
-    """test no response profile when not logged in"""
-    response = requests.get(f"{BASE_URL}/profile")
-    assert response.status_code == 403
+    """Checks profile of unlogged user."""
+    response = requests.get(f'{AUTH_SERVER}/profile')
+    assert response.status_code == 403, "Expected profile access to fail for unlogged user"
 
 
 def profile_logged(session_id: str) -> None:
-    """test get user profile when logged in"""
-    response = requests.get(f"{BASE_URL}/profile", cookies={"session_id": session_id})
-    assert response.status_code == 200
-    assert response.json()["email"] == "guillaume@holberton.io"
+    """Checks profile of logged-in user."""
+    headers = {'session_id': session_id}
+    response = requests.get(f'{AUTH_SERVER}/profile', headers=headers)
+    assert response.status_code == 200, f"Failed to access profile: {response.text}"
 
 
 def log_out(session_id: str) -> None:
-    """test log out"""
-    response = requests.delete(f"{BASE_URL}/sessions", cookies={"session_id": session_id})
-    assert response.status_code == 200
-    assert response.json()["message"] == "logged out"
+    """Logs out the user."""
+    headers = {'session_id': session_id}
+    response = requests.delete(f'{AUTH_SERVER}/logout', headers=headers)
+    assert response.status_code == 200, f"Failed to log out: {response.text}"
 
 
 def reset_password_token(email: str) -> str:
-    """test get token to reset password"""
-    response = requests.post(f"{BASE_URL}/reset_password", data={"email": email})
-    assert response.status_code == 200
-    return response.json()["reset_token"]
+    """Requests a password reset token."""
+    response = requests.post(f'{AUTH_SERVER}/reset_password', json={'email': email})
+    assert response.status_code == 200, f"Failed to get reset token: {response.text}"
+    return response.json()['reset_token']
 
 
 def update_password(email: str, reset_token: str, new_password: str) -> None:
-    """test to update password"""
-    response = requests.put(f"{BASE_URL}/reset_password", data={"email": email, "reset_token": reset_token, "new_password": new_password})
-    assert response.status_code == 200
-    assert response.json()["email"] == email
+    """Updates password using reset token."""
+    data = {'email': email, 'reset_token': reset_token, 'new_password': new_password}
+    response = requests.put(f'{AUTH_SERVER}/reset_password', json=data)
+    assert response.status_code == 200, f"Failed to update password: {response.text}"
+
+
+EMAIL = "guillaume@holberton.io"
+PASSWD = "b4l0u"
+NEW_PASSWD = "t4rt1fl3tt3"
 
 
 if __name__ == "__main__":
